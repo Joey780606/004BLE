@@ -1,6 +1,7 @@
 package com.example.blenordic
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -19,6 +21,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +29,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.blenordic.ui.theme.BleNordicTheme
 
 class MainActivity : ComponentActivity() {
+    //private val helloViewModel by viewModels<HelloCodelabViewModel>()
+    val TAG = this.javaClass.simpleName //重要
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -74,6 +80,9 @@ fun FirstScreen(navController: NavController) {
 
 @Composable
 fun SecondScreen(navController: NavController) {
+    val viewModel : SecondViewModel = viewModel()
+    Log.v("Main" , "SecondScreen start")
+    viewModel.start()
     Column (
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -93,6 +102,8 @@ fun SecondScreen(navController: NavController) {
 
 @Composable
 fun ThirdScreen(navController: NavController) {
+    val viewModel : ThirdViewModel = viewModel()
+    viewModel.start()
     Column (
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -106,6 +117,16 @@ fun ThirdScreen(navController: NavController) {
                 navController.navigate("first_screen")
             })
         )
+        Button(
+            modifier = Modifier
+                .weight(0.1f)
+                .padding(2.dp),
+            onClick = {
+                viewModel.scanBLE()
+            })
+        {
+            Text("Scan test")
+        }
     }
 }
 
