@@ -1,17 +1,17 @@
 package com.example.blenordic
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,11 +29,12 @@ import androidx.navigation.compose.rememberNavController
 import com.example.blenordic.ui.theme.BleNordicTheme
 
 class MainActivity : ComponentActivity() {
-    //private val helloViewModel by viewModels<HelloCodelabViewModel>()
+    private val mainActivityModel by viewModels<MainActivityViewModel>()
     val TAG = this.javaClass.simpleName //重要
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        mainActivityModel.initializeBluetoothOrRequestPermission(this@MainActivity) //Permission
         setContent {
             BleNordicTheme {
                 ComposeNavigation()
@@ -41,6 +42,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {  //Permission
+        when (requestCode) {
+            BLUETOOTH_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.none { it != PackageManager.PERMISSION_GRANTED }) {
+                    // all permissions are granted
+                    mainActivityModel.initializeBluetooth()
+                } else {
+                    // some permissions are not granted
+                }
+            }
+            else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
+    companion object {
+        const val BLUETOOTH_PERMISSION_REQUEST_CODE = 9999   //Permission
+
+        const val SCAN_START = 1
+        const val SCAN_STOP = 0
+    }
 }
 
 @Composable
@@ -62,6 +83,9 @@ fun ComposeNavigation() {
 
 @Composable
 fun FirstScreen(navController: NavController) {
+    val viewModel : FirstViewModel = viewModel()
+    Log.v("Main" , "FirstScreen start")
+    viewModel.start()
     Column (
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -122,10 +146,20 @@ fun ThirdScreen(navController: NavController) {
                 .weight(0.1f)
                 .padding(2.dp),
             onClick = {
-                viewModel.scanBLE()
+                viewModel.scanBLE(MainActivity.SCAN_START)  //Scan
             })
         {
             Text("Scan test")
+        }
+        Button(
+            modifier = Modifier
+                .weight(0.1f)
+                .padding(2.dp),
+            onClick = {
+                viewModel.scanBLE(MainActivity.SCAN_STOP)   //Scan
+            })
+        {
+            Text("Stop test")
         }
     }
 }
