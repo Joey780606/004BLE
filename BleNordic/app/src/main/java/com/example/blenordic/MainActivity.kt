@@ -1,5 +1,6 @@
 package com.example.blenordic
 
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -7,13 +8,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -123,14 +129,15 @@ fun SecondScreen(navController: NavController) {
     }
 }
 
-
+@SuppressLint("MissingPermission") //因應 scanData[info].device.name 加的
 @Composable
 fun ThirdScreen(navController: NavController) {
     val viewModel : ThirdViewModel = viewModel()
     viewModel.start()
+    val scanData by viewModel.scanInfoLiveData.observeAsState(initial = emptyList())
     Column (
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -141,25 +148,88 @@ fun ThirdScreen(navController: NavController) {
                 navController.navigate("first_screen")
             })
         )
-        Button(
-            modifier = Modifier
-                .weight(0.1f)
-                .padding(2.dp),
-            onClick = {
-                viewModel.scanBLE(MainActivity.SCAN_START)  //Scan
-            })
-        {
-            Text("Scan test")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(
+                modifier = Modifier
+                    .weight(0.1f)
+                    .padding(2.dp),
+                onClick = {
+                    viewModel.scanBLE(MainActivity.SCAN_START)  //Scan
+                })
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Filled.Search,
+                        contentDescription = "Localized description",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Text("Scan test")
+                }
+            }
+            Button(
+                modifier = Modifier
+                    .weight(0.1f)
+                    .padding(2.dp),
+                onClick = {
+                    viewModel.scanBLE(MainActivity.SCAN_STOP)   //Scan
+                })
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Filled.SearchOff,
+                        contentDescription = "Localized description",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Text("Stop scan")
+                }
+            }
+            Button(
+                modifier = Modifier
+                    .weight(0.1f)
+                    .padding(2.dp),
+                onClick = {
+                    viewModel.scanBLE(MainActivity.SCAN_STOP)   //Scan
+                })
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Filled.FilterAlt,
+                        contentDescription = "Localized description",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Text("Filter")
+                }
+            }
         }
-        Button(
-            modifier = Modifier
-                .weight(0.1f)
-                .padding(2.dp),
-            onClick = {
-                viewModel.scanBLE(MainActivity.SCAN_STOP)   //Scan
-            })
-        {
-            Text("Stop test")
+        Text("Find device amount: ${scanData.size}")
+        LazyColumn {
+            items(scanData.size) { info ->
+                Column(
+                    modifier = Modifier.clickable(enabled = true, onClick = { Log.v("TAG", "pos:$info")}),
+                    verticalArrangement = Arrangement.Top) {
+                    Row(horizontalArrangement = Arrangement.Start) {
+                        Text(text = scanData[info].device.address,
+                            modifier = Modifier.weight(1f))
+                        if(scanData[info].device.name != null) {    //重要,看起來要用此方式來檢查null, https://kotlinlang.org/docs/null-safety.html#checking-for-null-in-conditions
+                            Text(text = scanData[info].device.name,
+                                modifier = Modifier.weight(1f))
+                        } else {
+                            Text(text = "null",
+                                modifier = Modifier.weight(1f))
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.Start) {
+                        Text(text = scanData[info].txPower.toString(),
+                            modifier = Modifier.weight(1f))
+                        Text(text = scanData[info].rssi.toString(),
+                            modifier = Modifier.weight(4f))
+                        scanData[info].advertisingSid
+                    }
+                }
+            }
         }
     }
 }

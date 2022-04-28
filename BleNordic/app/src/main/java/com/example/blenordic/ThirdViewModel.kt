@@ -1,13 +1,21 @@
 package com.example.blenordic
 
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import no.nordicsemi.android.support.v18.scanner.*
 
 
-class ThirdViewModel: ViewModel() {
+class ThirdViewModel(): ViewModel() {
     val TAG = this.javaClass.simpleName //重要
-    var scanCallback = MyScanCallback()  //Scan
+
+    val scanInfoLiveData: LiveData<List<ScanResult>>
+        get() = _scanInfoLiveData
+
+    private val _scanInfoLiveData = MutableLiveData<List<ScanResult>>()
+
+    var scanCallback = MyScanCallback(_scanInfoLiveData)  //Scan
 
     override fun onCleared() {
         super.onCleared()
@@ -26,7 +34,7 @@ class ThirdViewModel: ViewModel() {
                 val settings: ScanSettings = ScanSettings.Builder()
                     .setLegacy(false)
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setReportDelay(5000)
+                    .setReportDelay(3000)
                     .setUseHardwareBatchingIfSupported(true)
                     .build()
                 val filters: MutableList<ScanFilter> = ArrayList()
@@ -40,7 +48,8 @@ class ThirdViewModel: ViewModel() {
         }
     }
 
-    class MyScanCallback: ScanCallback() {  //Scan
+    class MyScanCallback(info: MutableLiveData<List<ScanResult>>): ScanCallback() {  //Scan
+        var infoData = info
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
             Log.v("Test", "scanCallback type: $callbackType ${result.device.address}")
@@ -48,6 +57,7 @@ class ThirdViewModel: ViewModel() {
 
         override fun onBatchScanResults(results: MutableList<ScanResult>) {
             super.onBatchScanResults(results)
+            infoData.value = results
             Log.v("Test", "scanCallback onBatch: ${results.size}")
         }
 
